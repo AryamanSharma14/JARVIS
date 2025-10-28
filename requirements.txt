@@ -1,0 +1,14 @@
+SpeechRecognition
+pyttsx3
+wikipedia
+pyjokes
+sounddevice
+numpy
+psutil
+requests
+feedparser
+deep-translator
+screen-brightness-control
+pycaw
+pyautogui
+Pillow

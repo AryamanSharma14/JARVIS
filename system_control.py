@@ -276,7 +276,8 @@ def music_pause() -> str:
     try:
         from spotify_api import pause_playback as _pause
         msg = _pause()
-        if "Paused" in msg or "resume" in msg or "authenticate" not in msg:
+        # Accept only clear success; otherwise fall back to media key
+        if "Paused" in msg:
             return msg
     except Exception:
         pass
@@ -289,7 +290,7 @@ def music_play() -> str:
     try:
         from spotify_api import resume_playback as _resume
         msg = _resume()
-        if "Resuming" in msg or "authenticate" not in msg:
+        if "Resuming" in msg or "Playing" in msg:
             return msg
     except Exception:
         pass
@@ -301,7 +302,7 @@ def music_next() -> str:
     try:
         from spotify_api import next_track as _next
         msg = _next()
-        if "next track" in msg or "authenticate" not in msg:
+        if "next track" in msg:
             return msg
     except Exception:
         pass
@@ -313,12 +314,46 @@ def music_previous() -> str:
     try:
         from spotify_api import previous_track as _prev
         msg = _prev()
-        if "previous track" in msg or "authenticate" not in msg:
+        if "previous track" in msg:
             return msg
     except Exception:
         pass
     _send_media_key(VK_MEDIA_PREV_TRACK, repeat=1)
     return "Going back to the previous track."
+
+
+# --- Additional Spotify controls ---
+
+def spotify_shuffle(on: bool) -> str:
+    try:
+        from spotify_api import set_shuffle as _set_shuffle
+        return _set_shuffle(bool(on))
+    except Exception:
+        return "I couldn't change shuffle on Spotify."
+
+
+def spotify_repeat(mode: str) -> str:
+    try:
+        from spotify_api import set_repeat as _set_repeat
+        return _set_repeat(mode)
+    except Exception:
+        return "I couldn't change repeat on Spotify."
+
+
+def spotify_play_album(query: str) -> str:
+    try:
+        from spotify_api import play_context_query as _play_ctx
+        return _play_ctx(query, "album")
+    except Exception:
+        return "I couldn't play that album on Spotify."
+
+
+def spotify_play_playlist(query: str) -> str:
+    try:
+        from spotify_api import play_context_query as _play_ctx
+        return _play_ctx(query, "playlist")
+    except Exception:
+        return "I couldn't play that playlist on Spotify."
 
 
 def open_app(name: str) -> str:

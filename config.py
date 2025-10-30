@@ -60,7 +60,7 @@ IDLE_PROMPT_SECONDS: int = 15
 # To enable direct Spotify playback, create an app at https://developer.spotify.com/
 # and set these values. You must obtain a refresh token once via the Authorization Code flow.
 # If left blank, the assistant will fall back to opening Spotify/web search.
-SPOTIFY_CLIENT_ID: str = ""
-SPOTIFY_CLIENT_SECRET: str = ""
-SPOTIFY_REFRESH_TOKEN: str = ""
-SPOTIFY_REDIRECT_URI: str = "http://localhost:8080/callback"  # used when obtaining a refresh token
+SPOTIFY_CLIENT_ID: str = "5d97ebf3cca440e4b250ea511bf3b096"
+SPOTIFY_CLIENT_SECRET: str = "ca493cb086114276b4261fa5c202abb4"
+SPOTIFY_REFRESH_TOKEN: str = "AQDqKAAb-pK0xRX13KAfBuHEOV_EGAX3frFix_NNUHArtiS895WdR5OhXm31eSkqFFRhBTHQMQQjBseM7HHR4XFBj_4P5Z-OZBo7Z_lnIuY6Pn98Kxv4vd-RCEd99W0rgpI"
+SPOTIFY_REDIRECT_URI: str = "https://developer.spotify.com/callback"

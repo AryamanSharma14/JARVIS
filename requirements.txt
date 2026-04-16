@@ -12,3 +12,6 @@ screen-brightness-control
 pycaw
 pyautogui
 Pillow
+flask
+flask-socketio
+edge-tts

@@ -20,7 +20,7 @@ class JarvisGUI:
         if tk is None:
             raise RuntimeError("Tkinter not available")
         self.root = tk.Tk()
-        self.root.title("Jarvis")
+        self.root.title("Arvis")
         self.root.geometry("900x600")
         self.root.configure(bg="#0b0f1a")
         self.root.minsize(820, 520)
@@ -36,7 +36,7 @@ class JarvisGUI:
         self.top = tk.Frame(self.root, bg=self.bg)
         self.top.pack(fill=tk.X, padx=16, pady=(12, 8))
         self.title_label = tk.Label(
-            self.top, text="JARVIS", fg=self.accent, bg=self.bg, font=("Orbitron", 18, "bold")
+            self.top, text="ARVIS", fg=self.accent, bg=self.bg, font=("Orbitron", 18, "bold")
         )
         self.title_label.pack(side=tk.LEFT)
         self.status_var = tk.StringVar(value="Online")
@@ -122,7 +122,7 @@ class JarvisGUI:
         def _add():
             self.chat.config(state=tk.NORMAL)
             tag = "system"
-            if text.startswith("Jarvis:"):
+            if text.startswith("Arvis:"):
                 tag = "jarvis"
             elif text.startswith("You said:"):
                 tag = "user"
@@ -157,7 +157,7 @@ class JarvisGUI:
         # Inner ring
         c.create_oval(cx - r2, cy - r2, cx + r2, cy + r2, outline=col, width=3)
         # Neon single 'J' logo (no outline strokes)
-        c.create_text(cx, cy - 4, text="J", fill=self.accent, font=("Orbitron", 46, "bold"))
+        c.create_text(cx, cy - 4, text="A", fill=self.accent, font=("Orbitron", 46, "bold"))
 
     def _animate(self) -> None:
         self._mic_phase += 0.18 if self._mic_status != "idle" else 0.08

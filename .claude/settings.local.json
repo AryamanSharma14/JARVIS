@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(claude-developer-platform)",
+      "Bash(python:*)",
+      "Bash(source:*)",
+      "Bash(.venv/Scripts/python.exe:*)"
+    ]
+  }
+}

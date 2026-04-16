@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ARVIS — HUD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="state-idle">
+
+  <!-- ── TOP BAR ──────────────────────────────────────────────── -->
+  <header id="topbar">
+    <div id="logo-mark">A</div>
+    <div id="title-block">
+      <span id="title-main">ARVIS</span>
+      <span id="title-sub">ARTIFICIAL RESPONSIVE VIRTUAL INTELLIGENCE SYSTEM</span>
+    </div>
+    <div id="clock">00:00:00</div>
+    <div id="llm-badge" class="llm-offline">
+      <span class="llm-dot"></span>
+      <span id="llm-label">LLM OFFLINE</span>
+    </div>
+    <div id="status-bar">
+      <span class="status-dot"></span>
+      <span id="status-text">Online</span>
+    </div>
+  </header>
+
+  <!-- ── MAIN GRID ─────────────────────────────────────────────── -->
+  <main id="hud-grid">
+
+    <!-- LEFT PANEL -->
+    <section id="left-panel">
+
+      <!-- Arc Reactor -->
+      <div class="hud-panel" id="arc-panel">
+        <div class="panel-label">ARC CORE</div>
+        <canvas id="arc-canvas" width="220" height="220"></canvas>
+      </div>
+
+      <!-- Waveform -->
+      <div id="waveform">
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+      </div>
+
+      <!-- System Stats -->
+      <div class="hud-panel" id="stats-panel">
+        <div class="panel-label">SYSTEM STATUS</div>
+        <div class="stat-row">
+          <span class="stat-label">CPU</span>
+          <div class="stat-bar-bg"><div class="stat-bar" id="bar-cpu"></div></div>
+          <span class="stat-val" id="val-cpu">0%</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">MEM</span>
+          <div class="stat-bar-bg"><div class="stat-bar" id="bar-mem"></div></div>
+          <span class="stat-val" id="val-mem">0%</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">PWR</span>
+          <div class="stat-bar-bg"><div class="stat-bar" id="bar-pwr"></div></div>
+          <span class="stat-val" id="val-pwr">0%</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT PANEL -->
+    <section id="right-panel">
+
+      <!-- Chat history -->
+      <div class="hud-panel" id="comm-panel">
+        <div class="panel-label">COMM INTERFACE</div>
+        <div id="chat-history"></div>
+      </div>
+
+      <!-- Input -->
+      <div class="hud-panel" id="input-panel">
+        <div class="panel-label">INPUT</div>
+        <div id="input-row">
+          <span id="prompt-caret">&gt;</span>
+          <input id="user-input" type="text" placeholder="Type a command…" disabled autocomplete="off" />
+          <button id="send-btn" disabled>SEND</button>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -12,6 +12,7 @@ from typing import Optional
 import subprocess
 
 import pyttsx3
+import requests
 import speech_recognition as sr
 
 from config import (
@@ -31,13 +32,23 @@ from config import (
     SR_ADJUST_DURATION,
     SR_PHRASE_TIME_LIMIT,
     SR_MAX_TIMEOUTS_BEFORE_TEXT,
+    OLLAMA_HOST,
+    OLLAMA_MODEL,
+    LLM_ENABLED,
+    WEB_GUI_ENABLED,
+    WEB_GUI_PORT,
+    EDGE_TTS_ENABLED,
+    EDGE_TTS_VOICE,
+    EDGE_TTS_RATE,
 )
 try:
     from gui import JarvisGUI
 except Exception:
     JarvisGUI = None  # type: ignore
 from database import init_db, get_due_reminders, mark_reminder_done
-from jarvis_brain import SessionMemory, handle_command, greeting
+from jarvis_brain import greeting  # handle_command used as fallback inside ARVISBrain
+from core.memory import Memory
+from core.brain import ARVISBrain
 import runtime_control as rt
 
 # Optional fallback for audio capture when PyAudio is unavailable
@@ -125,6 +136,38 @@ class TTSEngineThread(threading.Thread):
         self.fail_count: int = 0
         self._lock = threading.Lock()
 
+    def _edge_tts_speak(self, text: str) -> bool:
+        """Neural TTS via Microsoft Edge — sounds like real Jarvis. Plays via Windows MCI."""
+        try:
+            import asyncio
+            import edge_tts
+            import tempfile
+            import ctypes
+
+            async def _generate(path: str) -> None:
+                await edge_tts.Communicate(text, EDGE_TTS_VOICE, rate=EDGE_TTS_RATE).save(path)
+
+            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
+                tmp = f.name
+
+            asyncio.run(_generate(tmp))
+
+            # Play synchronously with Windows MCI (no extra deps)
+            wm = ctypes.windll.winmm
+            alias = b"arvis_tts"
+            open_cmd = f'open "{tmp}" alias arvis_tts'.encode("utf-8")
+            wm.mciSendStringA(open_cmd, None, 0, None)
+            wm.mciSendStringA(b"play arvis_tts wait", None, 0, None)
+            wm.mciSendStringA(b"close arvis_tts", None, 0, None)
+
+            try:
+                os.unlink(tmp)
+            except Exception:
+                pass
+            return True
+        except Exception:
+            return False
+
     def _fallback_sapi_speak(self, text: str) -> bool:
         """Try speaking using direct SAPI if available as a last resort."""
         if CreateObject is None:
@@ -188,6 +231,13 @@ class TTSEngineThread(threading.Thread):
             text = self.q.get()
             if text == "__EXIT__":
                 break
+            # Edge TTS — neural Jarvis-like voice (highest priority)
+            try:
+                if EDGE_TTS_ENABLED and self._edge_tts_speak(text):
+                    self.fail_count = 0
+                    continue
+            except Exception:
+                pass
             # If forced robust TTS is enabled, use PowerShell path first
             try:
                 if getattr(rt, "FORCE_POWERSHELL_TTS", False):
@@ -413,9 +463,36 @@ def run_assistant(gui: Optional[object] = None) -> None:
     rt.SR_MIC_DEVICE_INDEX = mic_device_index
     rt.USE_SOUNDDEVICE = use_sounddevice
 
+    # Initialise ARVIS LLM brain (falls back to regex brain if Ollama is unreachable)
+    arvis_memory = Memory()
+    arvis_brain = ARVISBrain(model=OLLAMA_MODEL, host=OLLAMA_HOST, memory=arvis_memory)
+
+    def _check_ollama() -> bool:
+        try:
+            r = requests.get(f"{OLLAMA_HOST}/api/tags", timeout=3)
+            return r.status_code == 200
+        except Exception:
+            return False
+
+    ollama_online = _check_ollama()
+    if ollama_online:
+        logging.info(f"Ollama online — model: {OLLAMA_MODEL}")
+        if gui is not None and hasattr(gui, "set_llm_status"):
+            gui.set_llm_status(True, OLLAMA_MODEL)
+    else:
+        logging.warning("Ollama not reachable at startup.")
+        msg = (
+            f"AI brain is offline. To enable it: "
+            f"install Ollama from ollama.com, then run: ollama pull {OLLAMA_MODEL}"
+        )
+        speak(msg)
+        if gui is not None:
+            gui.add_history(f"[LLM OFFLINE] Run: ollama pull {OLLAMA_MODEL}")
+            if hasattr(gui, "set_llm_status"):
+                gui.set_llm_status(False, OLLAMA_MODEL)
+
     # Command queue and worker
     cmd_queue: queue.Queue[str] = queue.Queue()
-    mem = SessionMemory()
     # GUI text input queue
     gui_input_queue: Optional[queue.Queue[str]] = queue.Queue() if gui is not None else None
 
@@ -424,7 +501,10 @@ def run_assistant(gui: Optional[object] = None) -> None:
             cmd = cmd_queue.get()
             if cmd == "__EXIT__":
                 break
-            should_exit = handle_command(cmd, speak, mem)
+            if LLM_ENABLED:
+                should_exit = arvis_brain.process(cmd, speak)
+            else:
+                should_exit = arvis_brain._fallback(cmd, speak)
             if should_exit:
                 os._exit(0)
             cmd_queue.task_done()
@@ -434,10 +514,15 @@ def run_assistant(gui: Optional[object] = None) -> None:
     # If GUI present, wire text submit callback
     if gui is not None and hasattr(gui, "set_on_submit"):
         try:
-            gui.set_on_submit(lambda text: gui_input_queue.put(text) if gui_input_queue is not None else None)
-            # Start with typing disabled (voice mode)
-            if hasattr(gui, "set_typing_enabled"):
-                gui.set_typing_enabled(False)
+            if getattr(gui, "IS_WEB_GUI", False):
+                # Web UI: route typed text directly to cmd_queue so it works
+                # regardless of voice/text mode, without waiting for SR timeouts
+                gui.set_on_submit(lambda text: cmd_queue.put(text))
+            else:
+                gui.set_on_submit(lambda text: gui_input_queue.put(text) if gui_input_queue is not None else None)
+                # Start with typing disabled for Tkinter GUI (voice mode default)
+                if hasattr(gui, "set_typing_enabled"):
+                    gui.set_typing_enabled(False)
         except Exception:
             pass
 
@@ -631,7 +716,7 @@ def run_assistant(gui: Optional[object] = None) -> None:
                             rt.request_voice_mode()
                         except Exception:
                             pass
-                        speak("Switching to voice mode. Say 'Hey Jarvis' when you're ready.")
+                        speak(f"Switching to voice mode. Say 'Hey {ASSISTANT_NAME}' when you're ready.")
                         # clear text-mode request flag if any
                         rt.SWITCH_TO_TEXT_MODE = False
                         voice_mode = True
@@ -657,7 +742,13 @@ UI_ADD_HISTORY = None  # type: ignore
 
 def main() -> None:
     gui = None
-    if JarvisGUI is not None:
+    if WEB_GUI_ENABLED:
+        try:
+            from web_gui import WebGUI
+            gui = WebGUI(port=WEB_GUI_PORT)
+        except Exception:
+            gui = None
+    if gui is None and JarvisGUI is not None:
         try:
             from config import GUI_ENABLED
             if GUI_ENABLED:

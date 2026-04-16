@@ -39,6 +39,10 @@ from system_control import (
     music_play,
     music_next,
     music_previous,
+    spotify_shuffle,
+    spotify_repeat,
+    spotify_play_album,
+    spotify_play_playlist,
 )
 import runtime_control as rt
 import speech_recognition as sr
@@ -213,6 +217,19 @@ def handle_command(text: str, speak: Callable[[str], None], mem: SessionMemory) 
         speak(polite_ack())
         speak(play_music(app="spotify", query=song))
         return False
+    # Play album or playlist on Spotify
+    m = re.search(r"play\s+album\s+(.+?)\s+on\s+spotify$", c)
+    if m:
+        album = m.group(1).strip()
+        speak(polite_ack())
+        speak(spotify_play_album(album))
+        return False
+    m = re.search(r"play\s+playlist\s+(.+?)\s+on\s+spotify$", c)
+    if m:
+        pl = m.group(1).strip()
+        speak(polite_ack())
+        speak(spotify_play_playlist(pl))
+        return False
     if "play music" in c or "open music" in c:
         speak(polite_ack())
         speak(play_music(app="youtube"))
@@ -362,7 +379,7 @@ def handle_command(text: str, speak: Callable[[str], None], mem: SessionMemory) 
         speak(polite_ack())
         speak(music_pause())
         return False
-    if any(p in c for p in ["resume", "play", "continue", "start playback"]):
+    if any(p in c for p in ["resume", "play", "continue", "start playback", "play spotify"]):
         # Avoid catching 'play X on spotify' which is handled above
         if not re.search(r"play\s+.+\s+on\s+spotify", c):
             speak(polite_ack())
@@ -375,6 +392,18 @@ def handle_command(text: str, speak: Callable[[str], None], mem: SessionMemory) 
     if any(p in c for p in ["previous", "back", "previous song", "go back"]):
         speak(polite_ack())
         speak(music_previous())
+        return False
+    # Shuffle and repeat controls for Spotify
+    m = re.search(r"shuffle\s+(on|off)(?:\s+on\s+spotify)?$", c)
+    if m:
+        speak(polite_ack())
+        on = m.group(1).lower() == "on"
+        speak(spotify_shuffle(on))
+        return False
+    m = re.search(r"repeat\s+(one|track|all|context|off)(?:\s+on\s+spotify)?$", c)
+    if m:
+        speak(polite_ack())
+        speak(spotify_repeat(m.group(1)))
         return False
 
 

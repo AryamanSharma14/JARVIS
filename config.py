@@ -3,7 +3,7 @@ Configuration for Jarvis assistant.
 Edit values as desired.
 """
 
-ASSISTANT_NAME = "Jarvis"
+ASSISTANT_NAME = "Arvis"
 USER_NAME = "sir"  # How Jarvis should address you
 
 # Wake words Jarvis will respond to
@@ -12,6 +12,10 @@ WAKE_WORDS = [
     f"hi {ASSISTANT_NAME.lower()}",
     f"ok {ASSISTANT_NAME.lower()}",
     f"okay {ASSISTANT_NAME.lower()}",
+    "hey jarvis",  # SR often mishears "Arvis" as "Jarvis"
+    "hi jarvis",
+    "hey airways",
+    "hey always",
 ]
 
 # Behavior toggles
@@ -64,3 +68,18 @@ SPOTIFY_CLIENT_ID: str = "5d97ebf3cca440e4b250ea511bf3b096"
 SPOTIFY_CLIENT_SECRET: str = "ca493cb086114276b4261fa5c202abb4"
 SPOTIFY_REFRESH_TOKEN: str = "AQDqKAAb-pK0xRX13KAfBuHEOV_EGAX3frFix_NNUHArtiS895WdR5OhXm31eSkqFFRhBTHQMQQjBseM7HHR4XFBj_4P5Z-OZBo7Z_lnIuY6Pn98Kxv4vd-RCEd99W0rgpI"
 SPOTIFY_REDIRECT_URI: str = "https://developer.spotify.com/callback"
+
+# Web GUI
+WEB_GUI_ENABLED: bool = True
+WEB_GUI_PORT: int = 5000
+
+# Edge TTS (neural voice — sounds like actual Jarvis)
+EDGE_TTS_ENABLED: bool = True
+EDGE_TTS_VOICE: str = "en-GB-RyanNeural"  # British male neural voice
+EDGE_TTS_RATE: str = "+18%"               # slightly faster than default, sounds natural
+
+# LLM / Ollama settings (free, runs locally)
+# Install Ollama from https://ollama.com, then run: ollama pull llama3.1
+OLLAMA_HOST: str = "http://localhost:11434"
+OLLAMA_MODEL: str = "llama3.2"
+LLM_ENABLED: bool = True  # False = fall back to regex brain
